@@ -30,6 +30,11 @@ const int INT_INF = 0x3f3f3f3f;
 const int d4r[] = {0, 1, 0, -1}, d4c[] = {1, 0, -1, 0};
 
 int p[40000];
+int dp[40001];
+
+bool i_gt(const int& a, const int& b) {
+    return a > b;
+}
 
 int main() {
     ios::sync_with_stdio(false);
@@ -41,33 +46,15 @@ int main() {
         for (int i = 0; i < P; i++) {
             cin >> x; p[i] = x - 1;
         }
-        map<int, int> mp;
-        map<int, int>::iterator it, del;
-        mp[P] = 0;
+        memset(dp, -1, (1 + P) * sizeof(int));
+        dp[0] = P;
         for (int i = P - 1; i >= 0; i--) {
-            int v = mp.lower_bound(p[i] + 1)->second;
-            it = mp.lower_bound(p[i]);
-            if (it != mp.end() && it->second >= v + 1) continue;
-            else {
-                if (it != mp.begin()) {
-                    --it;
-                    while (true) {
-                        if (it->second <= v + 1) {
-                            if (it != mp.begin()) {
-                                del = it; --it; mp.erase(del);
-                            }
-                            else {
-                                mp.erase(it); break;
-                            }
-                        }
-                        else break;
-                    }
-                }
-                mp[p[i]] = v + 1;
-            }
+            int v = upper_bound(dp, dp + P + 1, p[i] + 1, i_gt) - dp - 1;
+            dp[v + 1] = max(dp[v + 1], p[i]);
         }
-        cout << mp.begin()->second << endl;
-
+        int ret = 0;
+        for (; ret <= P && dp[ret] >= 0; ret++);
+        cout << ret - 1 << endl;
     }
 
     return 0;
