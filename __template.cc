@@ -18,6 +18,8 @@
 #include <functional>
 
 #ifdef __APPLE__
+FILE *__fp = fopen("__sample.in", "r");
+#define scanf(__VA_ARGS_...) fscanf(__fp, __VA_ARGS_)
 #define cin fin
 std::ifstream cin("__sample.in");
 #endif
