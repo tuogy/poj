@@ -100,6 +100,24 @@ ull pollard_rho(ull n) {
     return n;
 }
 
+ull brent_rho(ull n) {
+    if (!(n & 1)) return 2;
+    while (!ptest(n)) {
+        while (true) {
+            ull y = rand() % 10000, x = y, p = 1, c = rand() % 100;
+            for (ull len = 1; p == 1; len <<= 1) {
+                y = x, p = 1;
+                for (ull i = 0; i < len && p == 1; i++) {
+                    x = (mul(x, x, n) + c) % n;
+                    p = __gcd(x < y ? y - x : x - y, n);
+                }
+                if (1 < p && p < n) return brent_rho(p);
+            }
+        }
+    }
+    return n;
+}
+
 void dfs(int i, ull cur, ull n) {
     if (cur >= A_MAX || cur * cur > n || cur * rest[i] <= best) return;
     best = max(best, cur);
@@ -114,10 +132,11 @@ int main() {
 
     ull gcd, lcm;
     while (cin >> gcd >> lcm) {
+    // for (gcd = 1, lcm = 1e9; lcm < 1e9 + 1000; lcm++) {
         ull N = lcm / gcd;
         nf = 0;
         for (ull n = N; n > 1; nf++) {
-            ull p = pollard_rho(n);
+            ull p = brent_rho(n);
             ull r = 1;
             for (; n % p == 0; n /= p) r *= p;
             factor[nf] = r;
