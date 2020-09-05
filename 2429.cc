@@ -35,6 +35,7 @@ const int d4r[] = {0, 1, 0, -1}, d4c[] = {1, 0, -1, 0};
 
 const int mxnf = 100;
 const int witness[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+const int sz_witness = 12;
 const ull A_MAX = 1ULL << 32;
 
 int nf;
@@ -54,10 +55,8 @@ ull mul(ull a, ull b, ull p) {
 }
 
 bool ptest(ull p) {
-    if (p <= 8) return p & 1 || p == 2;
     ull d = p - 1;
     while (!(d & 1)) d >>= 1;
-    int sz_witness = sizeof(witness) / sizeof(int);
     for (int i = 0; i < sz_witness && witness[i] < p; i++) {
         ull a = witness[i], r = 1;
         for (ll dd = d; dd; dd >>= 1, a = mul(a, a, p)) {
@@ -82,7 +81,6 @@ ull __gcd(ull a, ull b) {
 }
 
 ull pollard_rho(ull n) {
-    if (!(n & 1)) return 2;
     while (!ptest(n)) {
         while (true) {
             ull fast = rand() % 10000, slow = fast, p = 1, c = rand() % 100;
@@ -101,7 +99,6 @@ ull pollard_rho(ull n) {
 }
 
 ull brent_rho(ull n) {
-    if (!(n & 1)) return 2;
     while (!ptest(n)) {
         while (true) {
             ull y = rand() % 10000, x = y, p = 1, c = rand() % 100;
@@ -132,10 +129,17 @@ int main() {
 
     ull gcd, lcm;
     while (cin >> gcd >> lcm) {
-    // for (gcd = 1, lcm = 1e9; lcm < 1e9 + 1000; lcm++) {
-        ull N = lcm / gcd;
+        ull N = lcm / gcd, n = N;
         nf = 0;
-        for (ull n = N; n > 1; nf++) {
+        for (int i = 0; i < sz_witness; i++) {
+            ull p = witness[i];
+            if (n % p == 0) {
+                ull r = 1;
+                for (; n % p == 0; n /= p) r *= p;
+                factor[nf++] = r;
+            }
+        }
+        for (; n > 1; nf++) {
             ull p = brent_rho(n);
             ull r = 1;
             for (; n % p == 0; n /= p) r *= p;
