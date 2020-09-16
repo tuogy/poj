@@ -39,13 +39,13 @@ int get_random() {
     return rand() % 10000 - 5000;
 }
 
-void propag_up(int p) {
+void propag_up_addmax(int p) {
     for (; p >> 1; p >>= 1) {
         segt[p>>1] = max(segt[p], segt[p ^ 1]) + segt_d[p>>1];
     }
 }
 
-void propag_down(int p, int N) {
+void propag_down_addmax(int p, int N) {
     int h = sizeof(int) * 8 - __builtin_clz(p);
     for (int s = h - 1; s; s--) {
         int q = p >> (s - 1);
@@ -56,10 +56,7 @@ void propag_down(int p, int N) {
     }
 }
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(0);
-
+void range_add_range_max() {
     srand(time(0));
     int N = 1 + rand() % mxn;
     int Q = 100;
@@ -86,22 +83,24 @@ int main() {
                 if (r < N) segt_d[r] += v;
             }
         }
-        propag_up(L + N);
-        propag_up(R + N);
+        propag_up_addmax(L + N);
+        propag_up_addmax(R + N);
 
         I = rand() % N, J = rand() % N;
         L = min(I, J), R = max(I, J);
         qret_a = qret_segt = INT_MIN;
         // printf("query: [%d, %d]\n", L, R);
         for (int i = L; i <= R; i++) qret_a = max(qret_a, a[i]);
-        propag_down(L + N, N);
-        propag_down(R + N, N);
+        propag_down_addmax(L + N, N);
+        propag_down_addmax(R + N, N);
         for (int l = L + N, r = R + N + 1; l < r; l >>= 1, r >>= 1) {
             if (l & 1) qret_segt = max(qret_segt, segt[l++]);
             if (r & 1) qret_segt = max(qret_segt, segt[--r]);
         }
         if (qret_a != qret_segt) printf("diff: %d %d\n", qret_a, qret_segt);
     }
+}
 
-    return 0;
+int main() {
+    range_add_range_max();
 }
