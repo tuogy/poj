@@ -34,7 +34,7 @@ const int d4r[] = {0, 1, 0, -1}, d4c[] = {1, 0, -1, 0};
 const int mxn = 15, mxl = 101;
 const ll mod = 1000000007LL * 1000000007LL;
 string str[mxn];
-int strl[mxn], arrpfx[mxn][mxl], lcsp[mxn][mxn], dp[1 << mxn][mxn];
+int strl[mxn], arrpfx[mxn][mxl], lcsp[mxn][mxn], dp[1 << mxn][mxn], dp_opt[1 << mxn][mxn];
 ll hashsuffix[mxn][mxl], hashprefix[mxn][mxl], c2ll[26], mul[mxl];
 bool issubstr[mxn];
 
@@ -69,6 +69,29 @@ bool verify(int isuff, int ipref, int l) {
     return true;
 }
 
+bool lt_lexi(int s, int i_cur, int i_prev, int j_cur, int j_prev) {
+    int s_cur = s, s_prev = s;
+    while (j_cur >= 0) {
+        if (str[j_cur][i_cur] < str[j_prev][i_prev]) return true;
+        else if (str[j_cur][i_cur] > str[j_prev][i_prev]) return false;
+        else i_cur++, i_prev++;
+        if (i_cur == strl[j_cur]) {
+            int j_cur_next = dp_opt[s_cur][j_cur];
+            s_cur ^= 1 << j_cur;
+            if (s_cur)
+                i_cur = lcsp[j_cur][j_cur_next];
+            j_cur = j_cur_next;
+        }
+        if (i_prev == strl[j_prev]) {
+            int j_prev_next = dp_opt[s_prev][j_prev];
+            s_prev ^= 1 << j_prev;
+            if (s_prev)
+                i_prev = lcsp[j_prev][j_prev_next];
+            j_prev = j_prev_next;
+        }
+    }
+    return false;
+}
 
 int main() {
     ios::sync_with_stdio(false);
@@ -88,7 +111,7 @@ int main() {
         }
         for (int ip = 0; ip < n; ip++) {
             for (int is = 0; is < n; is++) {
-                if (ip == is || strl[ip] > strl[is]) continue;
+                if (ip == is || strl[ip] > strl[is] || (strl[ip] == strl[is] && ip < is)) continue;
                 if (match(is, ip)) {
                     issubstr[ip] = true; break;
                 }
@@ -130,23 +153,39 @@ int main() {
             if (s & substrmask) continue;
             for (int i = 0; i < n; i++) {
                 if (s >> i & 1) {
-                    int ss = s ^ 1 << i, rest = INT_MAX;
-                    if (ss == 0) rest = 0;
+                    int ss = s ^ 1 << i, best = INT_MAX, best_opt = -1;
+                    if (ss == 0) best = 0;
                     else {
                         for (int j = 0; j < n; j++) {
-                            if (ss >> j & 1) rest = min(rest, dp[ss][j] - lcsp[i][j]);
+                            if (ss >> j & 1) {
+                                int cur = dp[ss][j] - lcsp[i][j];
+                                if (cur < best || (cur == best && lt_lexi(ss, lcsp[i][j], lcsp[i][best_opt], j, best_opt))) 
+                                    best = cur, best_opt = j;
+                            }
                         }
                     }
-                    dp[s][i] = strl[i] + rest;
+                    dp[s][i] = strl[i] + best;
+                    dp_opt[s][i] = best_opt;
                 }
             }
         }
-        int allstr = ((1 << n) - 1) ^ substrmask, best = INT_INF;
-        for (int i = 0; i < n; i++) {
-            if (issubstr[i]) continue;
-            best = min(best, dp[allstr][i]);
+        int allstr = ((1 << n) - 1) ^ substrmask, best = INT_INF, bestj = -1;
+        for (int j = 0; j < n; j++) {
+            if (issubstr[j]) continue;
+            if (dp[allstr][j] < best || (dp[allstr][j] == best && lt_lexi(allstr, 0, 0, j, bestj))) 
+                best = dp[allstr][j], bestj = j;
         }
-        cout << "Scenario #" << ks << ": " << best << endl;
+        cout << "Scenario #" << ks << ":" << endl;
+        for (int i = 0, j = bestj, s = allstr; j >= 0;) {
+            cout << str[j][i++];
+            if (i == strl[j]) {
+                int j_next = dp_opt[s][j];
+                i = lcsp[j][j_next];
+                s ^= 1 << j;
+                j = j_next;
+            }
+        }
+        cout << endl << endl;
     }
 
     return 0;
